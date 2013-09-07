@@ -1,6 +1,49 @@
 package ImageMunger;
 use Moo::Role;
 
+sub cut_margin {
+    my ($self) = @_;
+    my $img = $self->image;
+    my $img_width = $img->getwidth;
+    my $img_height = $img->getheight;
+    my $color_white = Imager::Color->new( grey => 255 );
+
+    my $margin = 0.03;
+    my $x_margin = $img_width * $margin;
+    my $y_margin = $img_height * $margin;
+
+    # Left Margin
+    $img->box(
+        xmax => $x_margin,
+        color => $color_white,
+        filled => 1
+    );
+
+    # Right Margin
+    $img->box(
+        xmin => $img_width - $x_margin,
+        xmax => $img_width,
+        color => $color_white,
+        filled => 1
+    );
+
+    # Top Margin
+    $img->box(
+        ymin => 0,
+        ymax => $y_margin,
+        color => $color_white,
+        filled => 1
+    );
+
+    # Bottom Margin
+    $img->box(
+        ymin => $img_height - $y_margin,
+        ymax => $img_height,
+        color => $color_white,
+        filled => 1
+    );
+}
+
 sub clean_outlier_pixels2 {
     my ($self) = @_;
     my $size_grid = 10;
