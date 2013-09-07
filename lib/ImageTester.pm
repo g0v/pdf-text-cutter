@@ -62,4 +62,11 @@ sub remove_outlier_pixels {
     return $img;
 }
 
+sub guess_background_color {
+    my $self = $_[0];
+    my $color_count = $self->image->getcolorusagehash;
+    my @color = sort { $color_count->{$b} <=> $color_count->{$a} } keys %$color_count;
+    return unpack("C", $color[0]);
+}
+
 1;

@@ -4,50 +4,9 @@ use Moo;
 use Imager;
 use ImageTester;
 
-has image => (
-    is => "rw",
-    requried => 1
-);
+has image => (is => "rw", requried => 1);
 
-has background => (
-    is => "ro",
-    default => sub { Imager::Color->new(255,255,255,0) }
-);
-
-has xymin => (
-    is => "ro",
-    default => 24
-);
-
-sub clean_outlier_pixels {
-    my ($self) = @_;
-    my $size_grid = 4;
-    my $area_grid = $size_grid ** 2;
-    my $img = $self->image;
-    my $img_width = $img->getwidth;
-    my $img_height = $img->getheight;
-    my $color_white = Imager::Color->new( grey => 255 );
-
-    for (my $x  = 0; $x < $img_width; $x += $size_grid) {
-        for (my $y = 0; $y < $img_height; $y += $size_grid) {
-            my $grid = $img->crop( top => $y, left => $x, width => $size_grid, height => $size_grid ) or next;
-            my $color_count = $grid->getcolorusagehash;
-            my @colors = sort { $color_count->{$b} <=> $color_count->{$a} } keys %$color_count;
-            my $c0 = unpack("C", $colors[0]);
-
-            if ($c0 == 255 && $color_count->{$colors[0]} < $area_grid) {
-                if ($color_count->{$colors[0]} > 0.*$area_grid) {
-                    $img->box(
-                        xmin => $x, ymin => $y,
-                        xmax => $x+$size_grid-1,
-                        ymax => $y+$size_grid-1,
-                        fill => { solid => $color_white },
-                    );
-                }
-            }
-        }
-    }
-}
+with "ImageMunger";
 
 # return an ArrayRef[{ image => Imager, top => Int, bottom => Int }]
 sub cut_by_grid {
@@ -55,13 +14,8 @@ sub cut_by_grid {
     my $output = [];
     my $img = $self->image;
 
-    $img = $img->convert(preset=>'grey');
-    $img->write(file => "output/before.png");
-    $self->image($img);
-
-    $self->clean_outlier_pixels;
-
-    $self->image->write(file => "output/after.png");
+    # $self->clean_outlier_pixels;
+    # $self->image->write(file => "output/after.png");
 
     my $size_grid = 6;
     my $img_width = $img->getwidth();
@@ -119,15 +73,9 @@ sub cut_by_grid {
 
 sub cut_text_lines {
     my $self = $_[0];
-    my $img = $self->image;
-
-    $img = $img->convert(preset=>'grey');
-
-    # $self->image($img);
     # $self->clean_outlier_pixels;
-    # $self->image->write(file => "output/after-clean-pixels.png");
-    # $img = $self->image;
 
+    my $img = $self->image;
     my $img_width = $img->getwidth();
     my $img_height = $img->getheight();
 
