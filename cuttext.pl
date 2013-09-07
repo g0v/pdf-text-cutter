@@ -26,7 +26,7 @@ use lib "$FindBin::RealBin/lib";
 use Getopt::Std;
 my %opts;
 getopts("o:r:", \%opts);
-if ($opts{o} && !-f $opts{r} && @ARGV == 1) {
+if ($opts{o} && ($opts{r} && (!-f $opts{r} || $opts{r} eq "-")) && @ARGV == 1) {
     cuttext($ARGV[0], $opts{o}, $opts{r});
     exit 0;
 }
@@ -61,7 +61,13 @@ sub cuttext {
         push @$receipt, $r;
     }
 
-    open my $fh, ">", $output_receipt;
+    my $fh;
+
+    if ($opts{r} eq "-") {
+        $fh = \*STDOUT
+    }
+    else {
+        open $fh, ">", $output_receipt;
+    }
     print $fh JSON->new->utf8->pretty->encode($receipt);
-    close($fh);
 }
