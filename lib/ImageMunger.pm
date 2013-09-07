@@ -46,13 +46,14 @@ sub cut_margin {
 
 sub clean_outlier_pixels2 {
     my ($self) = @_;
-    my $size_grid = 10;
-    my $half_grid = int($size_grid/2);
-    my $area_grid = $size_grid ** 2;
 
     my $img = $self->image;
     my $img_width = $img->getwidth;
     my $img_height = $img->getheight;
+
+    my $size_grid = int($img_width * 0.01);
+    my $half_grid = int($size_grid/2);
+
     my $color_white = Imager::Color->new( grey => 255 );
 
     for (my $y = $half_grid; $y < $img_height - $half_grid; $y += 1) {
@@ -79,7 +80,7 @@ sub clean_outlier_pixels2 {
             my $c0 = Imager::Color->new(grey => unpack("C", $colors[0]));
             next if $c0->equals( other => $anchor_pixel, ignore_alpha => 1);
 
-            if ($color_count->{$colors[0]} > $area_grid * 0.95) {
+            if ($color_count->{$colors[0]} > $size_grid ** 2 * 0.95) {
                 $img->setpixel(
                     x => $x,
                     y => $y,
