@@ -12,8 +12,8 @@ sub clean_outlier_pixels2 {
     my $img_height = $img->getheight;
     my $color_white = Imager::Color->new( grey => 255 );
 
-    for (my $x = $half_grid; $x < $img_width - $half_grid; $x += 1) {
-        for (my $y = $half_grid; $y < $img_height - $half_grid; $y += 1) {
+    for (my $y = $half_grid; $y < $img_height - $half_grid; $y += 1) {
+        for (my $x = $half_grid; $x < $img_width - $half_grid; $x += 1) {
             my $anchor_pixel = $img->getpixel(x => $x, y => $y);
 
             my $grid = $img->crop(
@@ -24,7 +24,15 @@ sub clean_outlier_pixels2 {
             ) or next;
 
             my $color_count = $grid->getcolorusagehash;
-            my @colors = sort { $color_count->{$b} <=> $color_count->{$a} } keys %$color_count;
+            my @colors = keys %$color_count;
+
+            if (@colors == 1) {
+                $x += $half_grid - 1;
+                next;
+            }
+
+            @colors = sort { $color_count->{$b} <=> $color_count->{$a} } @colors;
+
             my $c0 = Imager::Color->new(grey => unpack("C", $colors[0]));
             next if $c0->equals( other => $anchor_pixel, ignore_alpha => 1);
 
