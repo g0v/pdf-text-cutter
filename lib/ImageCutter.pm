@@ -139,7 +139,7 @@ sub cut_text_lines_with_margin {
         my $line = $self->image->crop(%crop);
         push @ret, {
             image => $line,
-            margin => \%crop
+            box => \%crop
         };
     }
     return \@ret;
@@ -180,13 +180,40 @@ sub blank_line_groups {
         }
         else {
             if ($line_group) {
-                push @line_groups, $line_group;
+                if ($line_group->{bottom}) {
+                    push @line_groups, $line_group;
+                }
                 $line_group = undef;
             }
         }
     }
 
     return \@line_groups;
+}
+
+sub cut_text_rectangles {
+    my $self = $_[0];
+
+    my @ret;
+    my $rowcut = $self->cut_text_lines_with_margin;
+    for my $o (@$rowcut) {
+        my $x = $self->new( image => $o->{image}->copy->rotate( right => 90 ) );
+        my $colcut = $x->cut_text_lines_with_margin;
+        for my $p (@$colcut) {
+            my $cut = $p->{image}->copy->rotate( right => 270 );
+            push @ret, {
+                image => $cut,
+                box => {
+                    top    => $o->{box}{top},
+                    bottom => $o->{box}{bottom},
+                    left   => $p->{box}{top},
+                    right  => $p->{box}{bottom},
+                }
+            }
+        }
+    }
+
+    return \@ret;
 }
 
 1;

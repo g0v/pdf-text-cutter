@@ -49,14 +49,14 @@ sub cuttext {
 
     my $cutter = ImageCutter->new( image => $image );
 
-    my $o = $cutter->cut_text_lines_with_margin;
+    my $o = $cutter->cut_text_rectangles;
 
     my $receipt = [];
     my $i = 0;
     for (@$o) {
         my $r = {
             filename => (my $filename = catfile($output_dir, sprintf("%08d", $i++) . ".png")),
-            margin => $_->{margin}
+            box => $_->{box}
         };
         $_->{image}->write(file => $filename);
         push @$receipt, $r;
