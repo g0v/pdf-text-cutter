@@ -20,7 +20,7 @@ sub cut_by_grid {
     my $size_grid = 6;
     my $img_width = $img->getwidth();
     my $img_height = $img->getheight();
-    my $color_white = Imager::Color->new( grey => 255 );
+    my $color_white = Imager::Color->new("#FFFFFF");
 
     my $img_row;
     my ($row_top, $row_bottom) = (0, $size_grid);
@@ -73,13 +73,12 @@ sub cut_by_grid {
 
 sub cut_text_lines {
     my $self = $_[0];
-    # $self->clean_outlier_pixels;
 
     my $img = $self->image;
     my $img_width = $img->getwidth();
     my $img_height = $img->getheight();
 
-    my $color_white = Imager::Color->new(255,0,0,0);
+    my $color_white = Imager::Color->new("#FFFFFF");
 
     # find groups of contiguous rows that are not completely white.
     my $line_group;
@@ -90,6 +89,7 @@ sub cut_text_lines {
         my $white_count = 0;
         for my $col (0 .. $img_width-1) {
             my $c = $img->getpixel( x => $col, y => $row );
+            # say "$row,$col " . join(",", $c->rgba) . " <=> " . join(",", $color_white->rgba);
             if ($c->equals(other => $color_white, ignore_alpha => 1)) {
                 $white_count++;
             }
@@ -123,6 +123,70 @@ sub cut_text_lines {
         };
     }
     return \@ret;
+}
+
+sub cut_text_lines_with_margin {
+    my $self = $_[0];
+    my @ret;
+    my $blank_line_groups = $self->blank_line_groups;
+    for (my $i = 0; $i < @$blank_line_groups-1 ; $i++) {
+        my $lgi = $blank_line_groups->[$i];
+        my $lgj = $blank_line_groups->[$i+1];
+        my %crop = (
+            top => $lgi->{bottom},
+            bottom => $lgj->{top}
+        );
+        my $line = $self->image->crop(%crop);
+        push @ret, {
+            image => $line,
+            margin => \%crop
+        };
+    }
+    return \@ret;
+}
+
+sub blank_line_groups {
+    my $self = $_[0];
+
+    my $img = $self->image;
+    my $img_width = $img->getwidth();
+    my $img_height = $img->getheight();
+
+    my $color_white = Imager::Color->new("#FFFFFF");
+
+    # find groups of contiguous rows that are almost white.
+    my $line_group;
+    my @line_groups;
+
+    for my $row ( 0.. $img_height - 1 ) {
+        my $white_count = 0;
+        for my $col (0 .. $img_width-1) {
+            my $c = $img->getpixel( x => $col, y => $row );
+            if ($c->equals(other => $color_white, ignore_alpha => 1)) {
+                $white_count++;
+            }
+        }
+
+        my $is_blank = ( $white_count == $img_width );
+        # my $almost_blank = ( ($white_count / $img_width) > 0.999 );
+
+        if ( $is_blank ) {
+            if ($line_group) {
+                $line_group->{ bottom } = $row;
+            }
+            else {
+                $line_group = { top => $row };
+            }
+        }
+        else {
+            if ($line_group) {
+                push @line_groups, $line_group;
+                $line_group = undef;
+            }
+        }
+    }
+
+    return \@line_groups;
 }
 
 1;

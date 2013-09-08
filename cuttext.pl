@@ -48,7 +48,8 @@ sub cuttext {
     my $image = Imager->new( file => $img_file ) or die Imager->errstr;
 
     my $cutter = ImageCutter->new( image => $image );
-    my $o = $cutter->cut_text_lines;
+
+    my $o = $cutter->cut_text_lines_with_margin;
 
     my $receipt = [];
     my $i = 0;
