@@ -54,6 +54,7 @@ sub cuttext {
     my $receipt = [];
     my $i = 0;
     for (@$o) {
+        next unless $_->{image};
         my $r = {
             filename => (my $filename = catfile($output_dir, sprintf("%08d", $i++) . ".png")),
             box => $_->{box}
