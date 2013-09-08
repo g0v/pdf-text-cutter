@@ -73,60 +73,6 @@ sub cut_by_grid {
 
 sub cut_text_lines {
     my $self = $_[0];
-
-    my $img = $self->image;
-    my $img_width = $img->getwidth();
-    my $img_height = $img->getheight();
-
-    my $color_white = Imager::Color->new("#FFFFFF");
-
-    # find groups of contiguous rows that are not completely white.
-    my $line_group;
-    my @line_groups;
-    my $previous_line_is_blank = 1;
-
-    for my $row ( 0.. $img_height - 1 ) {
-        my $white_count = 0;
-        for my $col (0 .. $img_width-1) {
-            my $c = $img->getpixel( x => $col, y => $row );
-            # say "$row,$col " . join(",", $c->rgba) . " <=> " . join(",", $color_white->rgba);
-            if ($c->equals(other => $color_white, ignore_alpha => 1)) {
-                $white_count++;
-            }
-        }
-
-        my $almost_blank = ((100 * $white_count / $img_width) > 99.5);
-
-        if ( !$almost_blank ) {
-            if ($previous_line_is_blank) {
-                $line_group = { top => $row };
-            }
-        }
-        else {
-            if (!$previous_line_is_blank) {
-                $line_group->{bottom} = $row;
-                push @line_groups, $line_group;
-            }
-        }
-
-        # $previous_line_is_blank = ($white_count == $img_width);
-        $previous_line_is_blank = $almost_blank;
-    }
-
-    my @ret;
-    for my $lg (@line_groups) {
-        next if $lg->{bottom} - $lg->{top} < 10;
-        my $line = $img->crop(top => $lg->{top}, bottom => $lg->{bottom});
-        push @ret, {
-            image =>  $line,
-            margin => { top => $lg->{top}, bottom => $lg->{bottom} }
-        };
-    }
-    return \@ret;
-}
-
-sub cut_text_lines_with_margin {
-    my $self = $_[0];
     my @ret;
     my $blank_line_groups = $self->blank_line_groups;
     for (my $i = 0; $i < @$blank_line_groups-1 ; $i++) {
@@ -191,14 +137,15 @@ sub blank_line_groups {
     return \@line_groups;
 }
 
-sub cut_text_rectangles {
+sub cut_text_rectangles  {
     my $self = $_[0];
 
     my @ret;
-    my $rowcut = $self->cut_text_lines_with_margin;
+    my $rowcut = $self->cut_text_lines;
+
     for my $o (@$rowcut) {
         my $x = $self->new( image => $o->{image}->copy->rotate( right => 90 ) );
-        my $colcut = $x->cut_text_lines_with_margin;
+        my $colcut = $x->cut_text_lines;
         for my $p (@$colcut) {
             my $cut = $p->{image}->copy->rotate( right => 270 );
             push @ret, {
