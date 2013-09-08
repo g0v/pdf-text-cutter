@@ -163,4 +163,81 @@ sub cut_text_rectangles  {
     return \@ret;
 }
 
+sub cut_out_text_box {
+    my $self = $_[0];
+    my $img = $self->image;
+    my $img_width = $img->getwidth();
+    my $img_height = $img->getheight();
+    my $color_white = Imager::Color->new("#FFFFFF");
+
+    my $scanned = {};
+    my %boxes;
+    for my $y (0..$img_height-1) {
+        my $x = 0;
+        while($x < $img_width) {
+            if ($scanned->{$x}{$y}) {
+                $x += 1;
+                next;
+            }
+
+            my $px = $img->getpixel( x => $x, y => $y );
+            $scanned->{$x}{$y} = 1;
+            if($px->equals(other => $color_white, ignore_alpha => 1)) {
+                $x += 1;
+            } else {
+                my $box = $self->box_containing_connected_pixels_from(x => $x, y => $y);
+                my $k  = join ",", @{$box}{"top","bottom","left","right"};
+                $boxes{$k} ||= { box => $box };
+                $x = 1+$box->{right};
+                for my $x_ ($box->{left}..$box->{right}) {
+                    for my $y_ ($box->{top}..$box->{bottom}) {
+                        $scanned->{$x_}{$y_} = 1;
+                    }
+                }
+            }
+        }
+    }
+    my @ret = map { $_->{image} = $img->crop(%{$_->{box}}); $_ } values %boxes;
+    return \@ret;
+}
+
+sub box_containing_connected_pixels_from {
+    my ($self, %args) = @_;
+    my ($x,$y) = @args{"x", "y"};
+
+    my $box = { top => $y, bottom => $y, left => $x, right => $x };
+    my $img = $self->image;
+    my $anchor_pixel = $img->getpixel(x=>$x, y=>$y);
+    my $color_white = Imager::Color->new("#FFFFFF");
+    my $img_width = $self->image->getwidth;
+    my $img_height = $self->image->getheight;
+
+    my @stack = ([$x,$y]);
+    my $scanned = {};
+    while(@stack) {
+        my $p = shift @stack;
+        my ($x,$y) = @$p;
+        next if $scanned->{$x}{$y};
+        my $px = $img->getpixel(x => $x, y => $y);
+        $scanned->{$x}{$y} = 1;
+        if ( $px && !$px->equals(other => $color_white, ignore_alpha => 1 ) ) {
+            $box->{top}    = $y if $box->{top}    > $y;
+            $box->{bottom} = $y if $box->{bottom} < $y;
+            $box->{left}   = $x if $box->{left}   > $x;
+            $box->{right}  = $x if $box->{right}  < $x;
+
+            push(@stack, [$x+1, $y]);
+            push(@stack, [$x-1, $y]);
+            push(@stack, [$x, $y+1]);
+            push(@stack, [$x, $y-1]);
+            push(@stack, [$x+1, $y+1]);
+            push(@stack, [$x+1, $y-1]);
+            push(@stack, [$x-1, $y+1]);
+            push(@stack, [$x-1, $y-1]);
+        }
+    }
+
+    return $box;
+}
+
 1;
