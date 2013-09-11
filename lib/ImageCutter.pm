@@ -104,7 +104,9 @@ sub blank_line_groups {
     my $line_group;
     my @line_groups;
 
-    my $margin = int($img_width * 0.1);
+    # XXX: magic number
+    my $margin_ratio = $img_width > 100 ? 0.1 : 0;
+    my $margin = int($img_width * $margin_ratio);
 
     for my $row ( 0.. $img_height - 1 ) {
         my $white_count = 0;

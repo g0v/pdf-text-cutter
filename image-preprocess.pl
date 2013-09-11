@@ -20,11 +20,9 @@ use Imager;
 
 my $img = Imager->new( file => $ARGV[0]);
 $img = $img->convert( preset => "grey" );
-$img->write( file => "/tmp/grey.png" );
 
 my $mama = ImageMama->new( image =>  $img );
 $mama->cut_margin;
-$mama->clean_cutlines;
 $mama->clean_outlier_pixels2;
 
 $mama->image->write( file => $ARGV[1] );
