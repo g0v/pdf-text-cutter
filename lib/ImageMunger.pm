@@ -122,5 +122,34 @@ sub clean_outlier_pixels {
     }
 }
 
+# Remove cross-page black lines
+sub clean_cutlines {
+    my ($self) = @_;
+    my $threshold = 0.6;
+
+    my $color_white = Imager::Color->new("#FFFFFF");
+
+    my $img = $self->image;
+    for my $i (0,1) {
+        if ($i) {
+            $img = $img->rotate(right => 90);
+        }
+        my $img_width = $img->getwidth;
+        my @rows = (0..$img->getheight-1);
+        @rows = (0 .. @rows/4, 3*@rows/4 .. $#rows);
+        for my $y (@rows) {
+            my @colors = $img->getscanline(y => $y);
+            my @non_white = grep { !$_->equals(other => $color_white, ignore_alpha => 1 ) } @colors;
+            if (@non_white/@colors > $threshold) {
+                $img->setscanline(y => $y, pixels => [map{ $color_white } @colors]);
+            }
+        }
+    }
+
+    $img = $img->rotate(right => 270);
+    $self->image($img);
+    return $self;
+}
+
 
 1;

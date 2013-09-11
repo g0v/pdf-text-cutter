@@ -50,6 +50,7 @@ sub cuttext {
     my $cutter = ImageCutter->new( image => $image );
 
     my $o = $cutter->cut_text_rectangles;
+    # my $o = $cutter->cut_out_text_box;
 
     my $receipt = [];
     my $i = 0;

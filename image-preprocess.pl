@@ -24,6 +24,7 @@ $img->write( file => "/tmp/grey.png" );
 
 my $mama = ImageMama->new( image =>  $img );
 $mama->cut_margin;
+$mama->clean_cutlines;
 $mama->clean_outlier_pixels2;
 
 $mama->image->write( file => $ARGV[1] );

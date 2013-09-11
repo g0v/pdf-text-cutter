@@ -104,16 +104,18 @@ sub blank_line_groups {
     my $line_group;
     my @line_groups;
 
+    my $margin = int($img_width * 0.1);
+
     for my $row ( 0.. $img_height - 1 ) {
         my $white_count = 0;
-        for my $col (0 .. $img_width-1) {
+        for my $col ($margin .. ($img_width-$margin-1)) {
             my $c = $img->getpixel( x => $col, y => $row );
             if ($c->equals(other => $color_white, ignore_alpha => 1)) {
                 $white_count++;
             }
         }
 
-        my $is_blank = ( $white_count == $img_width );
+        my $is_blank = ( $white_count == $img_width - 2 * $margin );
         # my $almost_blank = ( ($white_count / $img_width) > 0.999 );
 
         if ( $is_blank ) {
@@ -226,14 +228,14 @@ sub box_containing_connected_pixels_from {
             $box->{left}   = $x if $box->{left}   > $x;
             $box->{right}  = $x if $box->{right}  < $x;
 
-            push(@stack, [$x+1, $y]);
-            push(@stack, [$x-1, $y]);
-            push(@stack, [$x, $y+1]);
-            push(@stack, [$x, $y-1]);
-            push(@stack, [$x+1, $y+1]);
-            push(@stack, [$x+1, $y-1]);
-            push(@stack, [$x-1, $y+1]);
-            push(@stack, [$x-1, $y-1]);
+            push(@stack, [$x+1, $y])   unless $scanned->{$x}{$y};
+            push(@stack, [$x+1, $y+1]) unless $scanned->{$x}{$y};
+            push(@stack, [$x+1, $y-1]) unless $scanned->{$x}{$y};
+            push(@stack, [$x-1, $y])   unless $scanned->{$x}{$y};
+            push(@stack, [$x-1, $y+1]) unless $scanned->{$x}{$y};
+            push(@stack, [$x-1, $y-1]) unless $scanned->{$x}{$y};
+            push(@stack, [$x, $y+1])   unless $scanned->{$x}{$y};
+            push(@stack, [$x, $y-1])   unless $scanned->{$x}{$y};
         }
     }
 
