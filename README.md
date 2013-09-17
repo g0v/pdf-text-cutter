@@ -14,6 +14,10 @@ tesserract 做 OCR。
   - cpanm Moo YAML List::MoreUtils Imager
 - xpdf
   - 需要 pdftoppm 指令
+- netpbm
+  - pamtilt
+  - pnmrotate
+  - pgmdeshadow
 
 執行
 ----

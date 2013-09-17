@@ -44,6 +44,64 @@ sub cut_margin {
     );
 }
 
+sub clean_outlier_pixels3 {
+    my ($self) = @_;
+
+    my $img = $self->image;
+    my $img_width = $img->getwidth;
+    my $img_height = $img->getheight;
+
+    my $size_grid = int($img_width * 0.01);
+    $size_grid = 10 if $size_grid < 10;
+
+    my $half_grid = int($size_grid/2);
+
+    my $color_white = Imager::Color->new( grey => 255 );
+
+    for (my $y = 0; $y < $img_height; $y += $size_grid) {
+        for (my $x = 0; $x < $img_width; $x += $size_grid) {
+            my @colors;
+            my $grid = $img->crop(
+                top    => $y,
+                left   => $x,
+                width  => $size_grid,
+                height => $size_grid
+            ) or next;
+
+            my $trim_edge = { top => 0, bottom => 0, left => 0, right => 0 };
+
+            @colors = $grid->getscanline(y => $trim_edge->{top});
+            while (@colors != 1) {
+                $trim_edge->{top} += 1;
+                @colors = $grid->getscanline(y => $trim_edge->{top});
+            }
+
+            @colors = $grid->getscanline(y => $size_grid - $trim_edge->{bottom});
+            while (@colors != 1) {
+                $trim_edge->{bottom} -= 1;
+                @colors = $grid->getscanline(y => $size_grid - $trim_edge->{bottom});
+            }
+
+            my $color_count = $grid->getcolorusagehash;
+            @colors = keys %$color_count;
+
+            next if @colors == 1;
+
+            my $anchor_pixel = $img->getpixel(x => $x, y => $y);
+            @colors = sort { $color_count->{$b} <=> $color_count->{$a} } @colors;
+            my $c0 = Imager::Color->new(grey => unpack("C", $colors[0]));
+            next if $c0->equals( other => $anchor_pixel, ignore_alpha => 1);
+
+            if ($color_count->{$colors[0]} > $size_grid ** 2 * 0.95) {
+                my @c = ($c0) x $size_grid;
+                for (my $i = $y + $trim_edge->{top}; $i < $y + $size_grid - $trim_edge->{bottom} - 1; $i++) {
+                    $img->setscanline(y => $y, pixels => @c);
+                }
+            }
+        }
+    }
+}
+
 sub clean_outlier_pixels2 {
     my ($self) = @_;
 
