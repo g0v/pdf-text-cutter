@@ -8,6 +8,21 @@ has image => (is => "rw", requried => 1);
 
 with "ImageMunger";
 
+sub looks_like_white {
+    state $color_white = Imager::Color->new("#FFFFFF");
+    my $color = shift;
+    return 1 if $color_white->equals(other => $color, ignore_alpha => 1);
+
+    my ($r,$g,$b,undef) = $color->rgba();
+
+    # 229 = 255 * 0.9
+    if ( $r > 229 && $g > 229 && $b > 229 ) {
+        return 1;
+    }
+
+    return 0;
+}
+
 # return an ArrayRef[{ image => Imager, top => Int, bottom => Int }]
 sub cut_by_grid {
     my ($self) = @_;
@@ -172,7 +187,6 @@ sub cut_out_text_box {
     my $img = $self->image;
     my $img_width = $img->getwidth();
     my $img_height = $img->getheight();
-    my $color_white = Imager::Color->new("#FFFFFF");
 
     my $scanned = {};
     my %boxes;
@@ -186,13 +200,14 @@ sub cut_out_text_box {
 
             my $px = $img->getpixel( x => $x, y => $y );
             $scanned->{$x}{$y} = 1;
-            if($px->equals(other => $color_white, ignore_alpha => 1)) {
+            if( looks_like_white($px) ) {
                 $x += 1;
             } else {
                 my $box = $self->box_containing_connected_pixels_from(x => $x, y => $y);
                 my $k  = join ",", @{$box}{"top","bottom","left","right"};
                 $boxes{$k} ||= { box => $box };
                 $x = 1+$box->{right};
+
                 for my $x_ ($box->{left}..$box->{right}) {
                     for my $y_ ($box->{top}..$box->{bottom}) {
                         $scanned->{$x_}{$y_} = 1;
@@ -201,8 +216,8 @@ sub cut_out_text_box {
             }
         }
     }
-    my @ret = map { $_->{image} = $img->crop(%{$_->{box}}); $_ } values %boxes;
-    return \@ret;
+    say "Box count: " . values(%boxes);
+    return [ values %boxes ];
 }
 
 sub box_containing_connected_pixels_from {
@@ -212,9 +227,6 @@ sub box_containing_connected_pixels_from {
     my $box = { top => $y, bottom => $y, left => $x, right => $x };
     my $img = $self->image;
     my $anchor_pixel = $img->getpixel(x=>$x, y=>$y);
-    my $color_white = Imager::Color->new("#FFFFFF");
-    my $img_width = $self->image->getwidth;
-    my $img_height = $self->image->getheight;
 
     my @stack = ([$x,$y]);
     my $scanned = {};
@@ -224,20 +236,20 @@ sub box_containing_connected_pixels_from {
         next if $scanned->{$x}{$y};
         my $px = $img->getpixel(x => $x, y => $y);
         $scanned->{$x}{$y} = 1;
-        if ( $px && !$px->equals(other => $color_white, ignore_alpha => 1 ) ) {
+        if ( $px && !looks_like_white($px) ) {
             $box->{top}    = $y if $box->{top}    > $y;
             $box->{bottom} = $y if $box->{bottom} < $y;
             $box->{left}   = $x if $box->{left}   > $x;
             $box->{right}  = $x if $box->{right}  < $x;
 
-            push(@stack, [$x+1, $y])   unless $scanned->{$x}{$y};
-            push(@stack, [$x+1, $y+1]) unless $scanned->{$x}{$y};
-            push(@stack, [$x+1, $y-1]) unless $scanned->{$x}{$y};
-            push(@stack, [$x-1, $y])   unless $scanned->{$x}{$y};
-            push(@stack, [$x-1, $y+1]) unless $scanned->{$x}{$y};
-            push(@stack, [$x-1, $y-1]) unless $scanned->{$x}{$y};
-            push(@stack, [$x, $y+1])   unless $scanned->{$x}{$y};
-            push(@stack, [$x, $y-1])   unless $scanned->{$x}{$y};
+            push(@stack, [$x+1, $y])   unless $scanned->{$x+1}{$y};
+            push(@stack, [$x-1, $y])   unless $scanned->{$x-1}{$y};
+            push(@stack, [$x, $y+1])   unless $scanned->{$x}{$y+1};
+            push(@stack, [$x, $y-1])   unless $scanned->{$x}{$y-1};
+            push(@stack, [$x+1, $y+1]) unless $scanned->{$x+1}{$y+1};
+            push(@stack, [$x+1, $y-1]) unless $scanned->{$x+1}{$y-1};
+            push(@stack, [$x-1, $y+1]) unless $scanned->{$x-1}{$y+1};
+            push(@stack, [$x-1, $y-1]) unless $scanned->{$x-1}{$y-1};
         }
     }
 
