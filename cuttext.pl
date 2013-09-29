@@ -46,16 +46,24 @@ sub cuttext {
     }
 
     my $image = Imager->new( file => $img_file ) or die Imager->errstr;
+    # $image->filter(type=>"autolevels", lsat=>0.2, usat=>0.2);
 
     my $cutter = ImageCutter->new( image => $image );
 
-    my $o = $cutter->cut_text_rectangles;
+    my $o = $cutter->cut_text_lines;
     # my $o = $cutter->cut_out_text_box;
 
     my $receipt = [];
     my $i = 0;
     for (@$o) {
-        next unless $_->{image};
+        if (!$_->{image} && $_->{box}) {
+            if ($_->{box}{right} > $_->{box}{left} && $_->{box}{bottom} > $_->{box}{top}) {
+                $_->{image} = $image->crop(%{ $_->{box} });
+            }
+        }
+
+        next if (!$_->{image});
+
         my $r = {
             filename => (my $filename = catfile($output_dir, sprintf("%08d", $i++) . ".png")),
             box => $_->{box}

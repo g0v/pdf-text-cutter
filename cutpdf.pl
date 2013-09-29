@@ -27,7 +27,7 @@ my $pdfoutputbase = basename($pdffile, ".pdf", ".PDF");
 my $pdfoutput = $opts{o}."/".$pdfoutputbase."/page";
 make_path($opts{o}."/".$pdfoutputbase);
 
-system("pdftoppm", "-mono", "-r", "300", $pdffile, $pdfoutput);
+system("pdftoppm", "-r", "300", $pdffile, $pdfoutput);
 
-system "parallel", $^X, "preprocess.pl", "{}", "{.}.png", ":::", <$pdfoutput-*.pbm>;
+system "parallel", $^X, "preprocess.pl", "{}", "{.}.png", ":::", <$pdfoutput-*.ppm>;
 system "parallel", $^X, "cuttext.pl", "-o", "{.}", "-r", "{.}/receipt.json", "{}", ":::", <$pdfoutput-*.png>;

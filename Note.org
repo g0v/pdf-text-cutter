@@ -1,0 +1,38 @@
+
+* Text Image 處理時會用到的 ImageMagick 操作
+
+  convert in.jpg  $OPTIONS out.jpg
+
+** 把接近黑/白色的部份變成純黑/白
+
+   -white-threshold 75% -black-threshold 75%
+
+** 解歪斜、除雜點
+
+   -background black -deskew 40% -despeckle
+   -bordercolor black -border 1x1
+   -fill white -fuzz 50% -floodfill +0,+0 black
+   -shave 1x1
+   
+** 把白色變成無色（去背）
+
+   -matte -fill none -draw "color 0,0 replace"
+
+** 裁邊
+
+   -fuzz 25% -trim
+
+** 讓線條變粗
+
+   -statistic minimum 2x1
+   -statistic minimum 3x3
+
+** 讓線條變細
+
+   -statistic minimum 3x1
+   -statistic maximum 3x3
+
+
+** xxx
+
+    parallel 'convert {} -white-threshold 75% -black-threshold 75% -background black -deskew 40% -despeckle  -bordercolor black -border 1x1 -fuzz 75% -fill white -floodfill +0,+0 black -statistic maximum 3x1 processed/{/.}.png' ::: originals/*.png
