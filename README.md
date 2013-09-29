@@ -9,6 +9,7 @@ tesserract 做 OCR。
 安裝
 ----
 
+- imagemagick
 - parallel
 - perl
   - cpanm Moo YAML List::MoreUtils Imager
