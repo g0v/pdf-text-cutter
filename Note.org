@@ -47,6 +47,14 @@
    -statistic mode 1x200
    -statistic mode 200x1
 
+** 找有字的列
+
+   -statistic minimum 200x1
+
+** 把筆劃變很細（極花時間）
+
+   -negate -morphology Thinning:-1 Skeleton
+
 *** 一次性移除直線與橫線
 
    function_image_remove_long_lines() {
