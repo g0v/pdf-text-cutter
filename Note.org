@@ -7,9 +7,14 @@
 
    -white-threshold 75% -black-threshold 75%
 
-** 解歪斜、除雜點
+** 除雜點
 
-   -background black -deskew 40% -despeckle
+   -despeckle
+   -statistics median 100x100
+
+** 解歪斜
+
+   -background black -deskew 40%
    -bordercolor black -border 1x1
    -fill white -fuzz 50% -floodfill +0,+0 black
    -shave 1x1
@@ -29,9 +34,33 @@
 
 ** 讓線條變細
 
-   -statistic minimum 3x1
+   -statistic maximum 3x1
    -statistic maximum 3x3
 
+
+** 找黑點
+
+   -statistic median 100x1
+
+** 找橫/直線 (長度 200px 以上)
+
+   -statistic mode 1x200
+   -statistic mode 200x1
+
+*** 一次性移除直線與橫線
+
+   function_image_remove_long_lines() {
+       input_file=$1
+       output_file=$2
+
+
+       line_length=60
+
+       convert ${input_file} \
+         \( +clone -statistic mode 2x100 \) -compose Minus -composite -negate \
+         \( +clone -statistic mode 100x2 \) -compose Minus -composite -negate \
+       ${output_file}
+   }
 
 ** xxx
 
