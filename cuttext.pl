@@ -34,10 +34,54 @@ exit 1;
 
 use File::Spec::Functions "catfile";
 use JSON;
+
 use Imager;
 use ImageCutter;
+use ImagerExt;
 
 sub cuttext {
+    my ($img_file, $output_dir, $output_receipt) = @_;
+    unless( -d $output_dir)  {
+        require File::Path;
+        File::Path::make_path($output_dir);
+    }
+
+    my $img = ImagerExt->new( file => $img_file );
+    my $splitters = $img->splitter_rows;
+
+    my $i;
+    my @row_groups;
+    my $group = [undef,undef,undef];
+    for ($i = 0; $i < @$splitters; $i++) {
+        $group->[0] //= $i;
+
+        if (defined($group->[2])) {
+            if ($group->[2] != $splitters->[$i]) {
+                $group->[1] = $i;
+                push @row_groups, $group;
+                $group = [ undef, undef, undef ];
+            }
+        }
+        else {
+            $group->[2] = $splitters->[$i];
+        }
+    }
+
+    # print YAML::Dump(\@row_groups);
+
+    my $img2 = $img->copy;
+    $img2->mark_splitter_rows_as_red;
+    $img2->write(file => "${output_dir}/splitters.png");
+
+    for ($i = 0; $i < @row_groups; $i++) {
+        next if $row_groups[$i]->[2];
+        my $x = $img->crop( top => $row_groups[$i-1]->[0], bottom => $row_groups[$i+1]->[1] );
+        $x->write( file => "${output_dir}/$i.png" );
+    }
+    return;
+}
+
+sub cuttext2 {
     my ($img_file, $output_dir, $output_receipt) = @_;
 
     unless( -d $output_dir)  {

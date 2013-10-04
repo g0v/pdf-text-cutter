@@ -4,7 +4,22 @@ use v5.14;
 use strict;
 use warnings;
 
-system "convert", $ARGV[0], qw( -white-threshold 75% -black-threshold 75% -background black -deskew 40% -despeckle  -bordercolor black -border 1x1 -fuzz 75% -fill white -floodfill), "+0,+0", qw( black -fuzz 25% -trim ), $ARGV[1];
+system "convert", $ARGV[0],
+    # -density              => "150x150",
+    # -resize               => "200%",
+    -fill                 => "white",
+    -level                => "20%,80%,1.0",
+    "-sigmoidal-contrast" => "30,50%",
+    -sharpen              => "0x2",
+    -deskew               => "40%",
+    -fuzz                 => "75%",
+    -background           => "black",
+    -bordercolor          => "black",
+    -border               => "1x1",
+    -floodfill            => "+0,+0", "black",
+    -fuzz                 => "25%",
+    qw( -trim -despeckle ),
+    $ARGV[1];
 
 # use FindBin;
 # use lib "$FindBin::RealBin/lib";
