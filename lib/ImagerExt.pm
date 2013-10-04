@@ -5,6 +5,10 @@ use strict;
 use warnings;
 use Statistics::Basic ":all";
 
+sub copy {
+    bless $_[0]->SUPER::copy, __PACKAGE__;
+}
+
 # return: ArrayRef[Num]
 sub white_score_per_row {
     my ($self) = shift;
@@ -90,13 +94,12 @@ sub splitter_rows_found_with_mean_and_stddev_in_top_bucket {
     }
 
     for (my $i = @top_range; $i < @ws; $i++) {
-        if ( abs($ws[$i]->{score} - $top_mean) < 2*$top_stddev ) {
+        if ( abs($ws[$i]->{score} - $top_mean) < $top_stddev ) {
             $splitter[ $ws[$i]->{row} ] = 1;
         }
     }
     return \@splitter;
 }
-
 
 sub mark_splitter_rows_as_red {
     my ($self) = @_;
