@@ -5,9 +5,9 @@ use strict;
 use warnings;
 use Statistics::Basic ":all";
 
-sub copy {
-    bless $_[0]->SUPER::copy, __PACKAGE__;
-}
+sub copy   { bless shift->SUPER::copy(@_),   __PACKAGE__ }
+sub crop   { bless shift->SUPER::crop(@_),   __PACKAGE__ }
+sub rotate { bless shift->SUPER::rotate(@_), __PACKAGE__ }
 
 # return: ArrayRef[Num]
 sub white_score_per_row {
@@ -111,6 +111,31 @@ sub mark_splitter_rows_as_red {
         }
     }
     return;
+}
+
+sub text_row_groups {
+    my $self = shift;
+
+    my $splitters = $self->splitter_rows;
+
+    my $i;
+    my @row_groups;
+    my $group = [undef,undef,undef];
+    for ($i = 0; $i < @$splitters; $i++) {
+        $group->[0] //= $i;
+        if (defined($group->[2])) {
+            if ($group->[2] != $splitters->[$i]) {
+                $group->[1] = $i;
+                push @row_groups, $group;
+                $group = [undef, undef, undef];
+            }
+        }
+        else {
+            $group->[2] = $splitters->[$i];
+        }
+    }
+
+    return \@row_groups;
 }
 
 1;
