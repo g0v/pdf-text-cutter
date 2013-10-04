@@ -4,22 +4,36 @@ use v5.14;
 use strict;
 use warnings;
 
-system "convert", $ARGV[0],
     # -density              => "150x150",
     # -resize               => "200%",
-    -fill                 => "white",
-    -level                => "20%,80%,1.0",
+#     qw( -trim -despeckle ),
+    # -deskew               => "40%",
+
+my ($input, $output) = @ARGV;
+
+system "convert", $input,
     "-sigmoidal-contrast" => "30,50%",
-    -sharpen              => "0x2",
-    -deskew               => "40%",
-    -fuzz                 => "75%",
+    -fill => "white",
     -background           => "black",
     -bordercolor          => "black",
-    -border               => "1x1",
-    -floodfill            => "+0,+0", "black",
-    -fuzz                 => "25%",
-    qw( -trim -despeckle ),
-    $ARGV[1];
+    -border               => "10x10",
+    -fuzz                 => "75%",
+    -floodfill            => "+0+0", "black",
+    qw (-trim +repage ),
+    "/tmp/proc.$$.png";
+
+system "convert", "/tmp/proc.$$.png",
+    -background => "white",
+    -fill                 => "white",
+    -deskew     => "40%",
+    qw (-trim +repage ),
+    -level                => "20%,80%,1.0",
+    -sharpen              => "0x2",
+    $output;
+
+unlink "/tmp/proc.$$.png";
+
+# my ($w, $h) = split " ", `convert $ARGV[1] -format '%[fx:w] %[fx:h]' info:`;
 
 # use FindBin;
 # use lib "$FindBin::RealBin/lib";
