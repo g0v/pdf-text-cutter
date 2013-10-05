@@ -1,4 +1,5 @@
 package ImagerExt;
+use v5.14;
 use parent 'Imager';
 
 use strict;
@@ -6,7 +7,11 @@ use warnings;
 use Statistics::Basic ":all";
 
 sub copy   { bless shift->SUPER::copy(@_),   __PACKAGE__ }
-sub crop   { bless shift->SUPER::crop(@_),   __PACKAGE__ }
+sub crop   {
+    my $x = shift->SUPER::crop(@_);
+    bless($x, __PACKAGE__) if $x;
+    return $x;
+}
 sub rotate { bless shift->SUPER::rotate(@_), __PACKAGE__ }
 
 # return: ArrayRef[Num]
@@ -114,9 +119,16 @@ sub mark_splitter_rows_as_red {
 }
 
 sub text_row_groups {
-    my $self = shift;
+    my ($self, $split_method) = @_;
 
-    my $splitters = $self->splitter_rows;
+    my $splitters;
+    if ($split_method) {
+        my $method = "splitter_rows_found_with_" . $split_method;
+        $splitters = $self->$method;
+    }
+    else {
+        $splitters = $self->splitter_rows;
+    }
 
     my $i;
     my @row_groups;
@@ -137,6 +149,61 @@ sub text_row_groups {
 
     return \@row_groups;
 }
+
+sub find_text_bbox {
+    my $self = shift;
+
+    my $got_a_row = sub {
+        my ($top, $bottom, $left, $right) = @_;
+        state $r = 0;
+        my $x = $self->crop( top => $top, bottom => $bottom, left => $left, right => $right );
+        say "$top - $bottom - $left - $right";
+        $x->write( file => "/tmp/row/${left}-${r}.png");
+        $r++;
+    };
+
+    my $color_white = Imager::Color->new("#FFFFFF");
+
+    my $width = $self->getwidth;
+    my $minwidth = $self->getwidth / 10;
+    my $height = $self->getheight;
+
+    for my $x (map { $width * $_ } 0, 0.25, 0.5, 0.75 ) {
+        my $row_mode = "bg"; # bg, fg
+        my $row_start;
+
+        for (my $y = 0; $y < $height; $y++) {
+            my $_width = 0.25 * $width;
+
+            my @px = $self->getscanline(x => $x, y => $y, width => $_width);
+            my %colors;
+            for (@px) {
+                my ($r,$g,$b) = $_->rgba;
+                $colors{"$r;$g;$b"}++;
+            }
+
+            if ( @px == ($colors{"255;255;255"}||=0) ) {
+                if ($row_mode eq "fg") {
+                    if ($y - $row_start > 8) {
+                        $got_a_row->($row_start, $y, $x, $x + $_width);
+                        $row_start = undef;
+                    }
+                }
+                else {
+                    $row_start = $y;
+                }
+                $row_mode = "bg";
+            }
+            else {
+                if ($row_mode eq "bg") {
+                    $row_start = $y;
+                }
+                $row_mode = "fg";
+            }
+        }
+    }
+}
+
 
 1;
 

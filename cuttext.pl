@@ -46,7 +46,7 @@ sub cuttext {
         File::Path::make_path($output_dir);
     }
 
-    my $margin = 4;
+    my $margin = 1;
     my $img = ImagerExt->new( file => $img_file );
     my $row_groups = $img->text_row_groups;
     for (my $i = 0; $i < @$row_groups; $i++) {
@@ -58,7 +58,7 @@ sub cuttext {
         $x->write( file => "${output_dir}/$i.png" );
 
         my $y = $x->rotate(degrees => 90);
-        my $col_groups = $y->text_row_groups;
+        my $col_groups = $y->text_row_groups("nn");
         for (my $j = 0; $j < @$col_groups; $j++) {
             next if $col_groups->[$j][2];
             $y->crop(
