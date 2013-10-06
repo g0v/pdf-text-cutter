@@ -69,4 +69,24 @@ sub guess_background_color {
     return unpack("C", $color[0]);
 }
 
+# return: ArrayRef[Num]
+sub white_score_per_row {
+    my $self = shift;
+    my $h = $self->image->getheight;
+    my @score;
+    for my $y (0..$h-1) {
+        my @pixels = $self->image->getscanline( y => $y );
+        my $s = 0;
+        for my $px (@pixels) {
+            # Each px is scored between (0, 1) (incl)
+            my ($r,$g,$b) = $px->rgba;
+            $s += ($r + $g +$b)/765;
+            # $s += sqrt( ($r/255)**2 + ($g/255)**2 + ($b/255)**2 );
+        }
+        # Each row is also scored betweend (0,1) (incl)
+        push @score, $s/@pixels;
+    }
+    return \@score;
+}
+
 1;
