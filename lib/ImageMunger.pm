@@ -230,5 +230,96 @@ sub remove_outlier_pixels {
     return $img;
 }
 
+sub trim_edges {
+    my $self = shift;
+    my $crop = $self->parameters_to_crop_edges;
+    $self->image( $self->image->crop(%$crop) );
+    return $self;
+}
+
+sub parameters_to_crop_edges {
+    my $self = shift;
+
+    my $img = $self->image;
+    # get top edge color
+
+    my $img_width = $img->getwidth;
+    my $img_height = $img->getheight;
+
+    my $edge_color = {
+        top    => $img->getpixel( y => 0,                  x => int($img_width/2) ),
+        bottom => $img->getpixel( y => $img_height - 1,    x => int($img_width/2) ),
+        left   => $img->getpixel( y => int($img_height/2), x => 0                 ),
+        right  => $img->getpixel( y => int($img_height/2), x => $img_width - 1    ),
+    };
+    my $crop = {
+        top => 0,
+        bottom => $img_height - 1,
+        left => 0,
+        right => $img_width - 1
+    };
+
+    # top
+    for my $y (0 .. int($img_height/2-1)) {
+        my @px = $img->getscanline(y => $y);
+        my $cut = 0;
+        for my $c (@px) {
+            $cut++ if $c->equals( other => $edge_color->{top}, ignore_alpha => 1 );
+        }
+        if ($cut == @px) {
+            $crop->{top} = $y;
+        }
+        else {
+            last;
+        }
+    }
+
+    # bottom
+    for my $y ( reverse int($img_height/2-1) .. $img_height-1 ) {
+        my @px = $img->getscanline(y => $y);
+        my $cut = 0;
+        for my $c (@px) {
+            $cut++ if $c->equals( other => $edge_color->{bottom}, ignore_alpha => 1 );
+        }
+        if ($cut == @px) {
+            $crop->{bottom} = $y;
+        }
+        else {
+            last;
+        }
+    }
+
+    # left
+    for my $x ( 0 .. int($img_width/2-1) ) {
+        my @px = map { $img->getpixel( x => $x, y => $_ ) } 0..$img_height-1;
+        my $cut = 0;
+        for my $c (@px) {
+            $cut++ if $c->equals( other => $edge_color->{left}, ignore_alpha => 1 );
+        }
+        if ($cut == @px) {
+            $crop->{left} = $x;
+        }
+        else {
+            last;
+        }
+    }
+
+    # right
+    for my $x ( reverse int($img_width/2-1) .. $img_width-1 ) {
+        my @px = map { $img->getpixel( x => $x, y => $_ ) } 0..$img_height-1;
+        my $cut = 0;
+        for my $c (@px) {
+            $cut++ if $c->equals( other => $edge_color->{right}, ignore_alpha => 1 );
+        }
+        if ($cut == @px) {
+            $crop->{right} = $x;
+        }
+        else {
+            last;
+        }
+    }
+
+    return $crop;
+}
 
 1;
