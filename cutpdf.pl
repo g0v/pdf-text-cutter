@@ -23,11 +23,22 @@ $opts{o} or die "`-o dir/` is required";
 make_path($opts{o}) unless -d $opts{o};
 
 my $pdffile = $ARGV[0] or die;
-my $pdfoutputbase = basename($pdffile, ".pdf", ".PDF");
-my $pdfoutput = $opts{o}."/".$pdfoutputbase."/page";
-make_path($opts{o}."/".$pdfoutputbase);
+my $pdfoutputbase = $opts{o} . "/" . basename($pdffile, ".pdf", ".PDF");
+my $pdfoutput = $pdfoutputbase."/page.png";
+make_path($pdfoutputbase);
 
-system("pdftoppm", "-r", "600", $pdffile, $pdfoutput);
+system qw(convert -density 400), $pdffile, $pdfoutput;
 
-system "parallel", $^X, "preprocess.pl", "{}", "{.}.png", ":::", <$pdfoutput-*.ppm>;
+my @pages = <$pdfoutputbase/*.png>;
+
+system "parallel",
+    'mogrify -sigmoidal-contrast 30,50% -fill white -bordercolor black -border 1x1 -fuzz 75% -floodfill +0+0 black -trim -level 20%,80%,1.0 -sharpen 2 {}',
+    ':::',
+    @pages;
+
+system "parallel",
+    'mogrify -background white -fill white -deskew 40% -trim {}',
+    ':::',
+    @pages;
+
 system "parallel", $^X, "cuttext.pl", "-o", "{.}", "-r", "{.}/receipt.json", "{}", ":::", <$pdfoutput-*.png>;
