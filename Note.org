@@ -31,6 +31,7 @@
 
    -statistic minimum 2x1
    -statistic minimum 3x3
+   -statistic minimum 8x8
 
 ** 讓線條變細
 
@@ -57,10 +58,9 @@
 
 *** 一次性移除直線與橫線
 
-   function_image_remove_long_lines() {
+   function image_remove_long_lines() {
        input_file=$1
        output_file=$2
-
 
        line_length=60
 
@@ -73,3 +73,11 @@
 ** xxx
 
     parallel 'convert {} -white-threshold 75% -black-threshold 75% -background black -deskew 40% -despeckle  -bordercolor black -border 1x1 -fuzz 75% -fill white -floodfill +0,+0 black -statistic maximum 3x1 processed/{/.}.png' ::: originals/*.png
+
+* 以 8connect lines 割字
+
+  - 增粗筆劃，到每個字都變成一團黑色、難以變識的地步
+  - 一一找出黑點，並以 8-connect flood-fiil 找出相連的區域（bounding box） 
+  - 以區域座標剪下原圖的位置
+  - 逐一檢驗剪下的小圖的尺寸、黑白程度等，過濾異常者
+
