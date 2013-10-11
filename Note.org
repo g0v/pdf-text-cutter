@@ -43,10 +43,15 @@
 
    -statistic median 100x1
 
-** 找橫/直線 (長度 200px 以上)
+** 找橫/直線
 
    -statistic mode 1x200
-   -statistic mode 200x1
+
+   -statistic mode 200x1 -statistic mode 600x1
+
+*** 做兩次長度不同的 "-statistic mode", 夠長的橫線不會被消去，可以減少誤判（false positive）。最後再加粗一點點。
+
+   -statistic mode 100x3 -statistic mode 300x1 -statistic minimum 1x3
 
 ** 一次性移除直線與橫線
 
@@ -55,7 +60,7 @@
        output_file=$2
 
        line_length=60
-
+       
        convert ${input_file} \
          \( +clone -statistic mode 2x100 \) -compose Minus -composite -negate \
          \( +clone -statistic mode 100x2 \) -compose Minus -composite -negate \
