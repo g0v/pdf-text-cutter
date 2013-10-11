@@ -216,7 +216,6 @@ sub cut_8connect_boxes {
             }
         }
     }
-    say "Box count: " . values(%boxes);
     return [ values %boxes ];
 }
 

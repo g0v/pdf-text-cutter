@@ -24,10 +24,10 @@ make_path($opts{o}) unless -d $opts{o};
 
 my $pdffile = $ARGV[0] or die;
 my $pdfoutputbase = $opts{o} . "/" . basename($pdffile, ".pdf", ".PDF");
-my $pdfoutput = $pdfoutputbase."/page.png";
+
 make_path($pdfoutputbase);
 
-system qw(convert -density 400), $pdffile, $pdfoutput;
+system qw(convert -density 300), $pdffile, $pdfoutputbase."/page.png";
 
 my @pages = <$pdfoutputbase/*.png>;
 
@@ -41,4 +41,4 @@ system "parallel",
     ':::',
     @pages;
 
-system "parallel", $^X, "cuttext.pl", "-o", "{.}", "-r", "{.}/receipt.json", "{}", ":::", <$pdfoutput-*.png>;
+system "parallel", $^X, "cut-text-with-8connect.pl", "{}", "$opts{o}/{/.}", ":::", <$pdfoutputbase/page*.png>;

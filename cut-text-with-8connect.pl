@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use JSON;
 use Imager;
+use File::Path qw(make_path);
 
 use FindBin;
 use lib "$FindBin::Bin/lib";
@@ -24,13 +25,13 @@ system "convert", "-statistic", "minimum", "8x8", $input_file, $shadowed;
 my $cutter = ImageCutter->new( image => Imager->new(file => $shadowed) );
 my $boxes = $cutter->cut_8connect_boxes;
 
-mkdir($output_dir) unless -d $output_dir;
+make_path($output_dir) unless -d $output_dir;
 
 my $original_image = Imager->new(file => $input_file);
 for (@$boxes) {
     my $b = $_->{box};
     my $x = $original_image->crop(%$b);
-    $x->write(file => "${output_dir}/bbox-" . join(",", @{$b}{"top","bottom","left","right"}) . ".png");
+    $x->write(file => "${output_dir}/bbox-" . join(",", @{$b}{"top","right", "bottom","left"}) . ".png");
 }
 
 open my $fh, ">", "${output_dir}/receipt.json";
