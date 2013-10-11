@@ -9,26 +9,31 @@ use FindBin;
 use lib "$FindBin::Bin/lib";
 use ImageCutter;
 
-my $file = shift or die;
+@ARGV == 2 or die <<"ERROR";
+
+Usage - $0 input.png output_dir/
+
+ERROR
+
+my ($input_file, $output_dir) = @ARGV;
 
 my $shadowed = "/tmp/$$.shadowed.png";
 
-system "convert", "-statistic", "minimum", "8x8", $file, $shadowed;
+system "convert", "-statistic", "minimum", "8x8", $input_file, $shadowed;
 
 my $cutter = ImageCutter->new( image => Imager->new(file => $shadowed) );
-my $boxes = $cutter->cut_out_text_box;
+my $boxes = $cutter->cut_8connect_boxes;
 
-my $output_dir = "/tmp/boxes";
 mkdir($output_dir) unless -d $output_dir;
 
-my $original_image = Imager->new(file => $file);
+my $original_image = Imager->new(file => $input_file);
 for (@$boxes) {
     my $b = $_->{box};
     my $x = $original_image->crop(%$b);
     $x->write(file => "${output_dir}/bbox-" . join(",", @{$b}{"top","bottom","left","right"}) . ".png");
 }
 
-open my $fh, ">", "${output_dir}/box.json";
+open my $fh, ">", "${output_dir}/receipt.json";
 say $fh JSON::to_json( $boxes, { pretty => 1 });
 
 unlink $shadowed;

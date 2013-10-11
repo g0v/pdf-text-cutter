@@ -182,7 +182,7 @@ sub cut_text_rectangles  {
     return \@ret;
 }
 
-sub cut_out_text_box {
+sub cut_8connect_boxes {
     my $self = $_[0];
     my $img = $self->image;
     my $img_width = $img->getwidth();
