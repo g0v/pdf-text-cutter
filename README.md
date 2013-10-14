@@ -9,19 +9,15 @@ tesserract 做 OCR。
 安裝
 ----
 
-- imagemagick
+- imagemagick (需要 convert 與 mogrify 指令)
 - parallel
 - perl
   - cpanm Moo YAML List::MoreUtils Imager
-- xpdf
-  - 需要 pdftoppm 指令
-- netpbm
-  - pamtilt
-  - pnmrotate
-  - pgmdeshadow
 
 執行
 ----
 
     perl ./cutpdf.pl -o output/dir/ input.pdf
+
+    perl ./cutpdf.pl -o output/dir/ input.png
 
