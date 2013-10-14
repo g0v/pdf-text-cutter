@@ -22,23 +22,36 @@ getopts("o:r:", \%opts);
 $opts{o} or die "`-o dir/` is required";
 make_path($opts{o}) unless -d $opts{o};
 
-my $pdffile = $ARGV[0] or die;
-my $pdfoutputbase = $opts{o} . "/" . basename($pdffile, ".pdf", ".PDF");
+my $file = $ARGV[0] or die;
+my ($basename) = $file =~ m{/([^/]+)\.[a-z]{3}\z}i;
 
-make_path($pdfoutputbase);
+my $outputbase = "$opts{o}/$basename";
 
-system qw(convert -density 300), $pdffile, $pdfoutputbase."/page.png";
+if (-d $outputbase) {
+    say "Output dir already exists: $outputbase";
+    exit;
+}
 
-my @pages = <$pdfoutputbase/*.png>;
+make_path($outputbase);
 
+system qw(convert -density 300), $file, $outputbase."/page.png";
+
+my @pages = <$outputbase/*.png>;
+
+# Clear black borders and enhance black/white
 system "parallel",
     'mogrify -sigmoidal-contrast 30,50% -fill white -bordercolor black -border 1x1 -fuzz 75% -floodfill +0+0 black -trim -level 20%,80%,1.0 -sharpen 2 {}',
     ':::',
     @pages;
 
+# Deskew
 system "parallel",
     'mogrify -background white -fill white -deskew 40% -trim {}',
     ':::',
     @pages;
 
-system "parallel", $^X, "cut-text-with-8connect.pl", "{}", "$opts{o}/{/.}", ":::", <$pdfoutputbase/page*.png>;
+# Remove long horizontal/vertical lines (tabular/cell border)
+system 'parallel', "sh $FindBin::Bin/image-remove-lines.sh {} dehvlines-{.}.png", ':::', @pages;
+
+# cutting
+system "parallel", $^X, "cut-text-with-8connect.pl", "{}", "$opts{o}/{/.}", ":::", <$outputbase/dehvlines-*.png>;
