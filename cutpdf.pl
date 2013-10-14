@@ -51,7 +51,7 @@ system "parallel",
     @pages;
 
 # Remove long horizontal/vertical lines (tabular/cell border)
-system 'parallel', "sh $FindBin::Bin/image-remove-lines.sh {} dehvlines-{.}.png", ':::', @pages;
+system 'parallel', "sh $FindBin::Bin/image-remove-lines.sh {}", ':::', @pages;
 
 # cutting
-system "parallel", $^X, "cut-text-with-8connect.pl", "{}", "$opts{o}/{/.}", ":::", <$outputbase/dehvlines-*.png>;
+system "parallel", $^X, "cut-text-with-8connect.pl", "{}", "$opts{o}/{/.}", ":::", <$outputbase/page*.png>;
