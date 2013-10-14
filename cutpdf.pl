@@ -54,4 +54,4 @@ system "parallel",
 system 'parallel', "sh $FindBin::Bin/image-remove-lines.sh {}", ':::', @pages;
 
 # cutting
-system "parallel", $^X, "cut-text-with-8connect.pl", "{}", "$opts{o}/{/.}", ":::", <$outputbase/page*.png>;
+system "parallel", $^X, "cut-text-with-8connect.pl", "{}", "${outputbase}/{/.}", ":::", <$outputbase/page*.png>;
