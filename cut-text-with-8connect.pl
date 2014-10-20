@@ -20,7 +20,7 @@ my ($input_file, $output_dir) = @ARGV;
 
 my $shadowed = "/tmp/$$.shadowed.png";
 
-system "convert", "-statistic", "minimum", "8x8", $input_file, $shadowed;
+system "convert", "-statistic", "minimum", "3x3", $input_file, $shadowed;
 
 my $cutter = ImageCutter->new( image => Imager->new(file => $shadowed) );
 my $boxes = $cutter->cut_8connect_boxes;
