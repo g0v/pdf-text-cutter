@@ -208,10 +208,10 @@ sub cut_8connect_boxes {
                 $boxes{$k} ||= { box => $box };
                 $x = 1+$box->{right};
 
-                for my $x_ ($box->{left}..$box->{right}) {
-                    for my $y_ ($box->{top}..$box->{bottom}) {
+                for my $x_ (keys %{$box->{scanned}}) {
+                    for my $y_ (keys %{$box->{scanned}{$x_}}) {
                         $scanned->{$x_}{$y_} = 1;
-                    }
+                    }                    
                 }
             }
         }
@@ -228,7 +228,7 @@ sub box_containing_connected_pixels_from {
     my $anchor_pixel = $img->getpixel(x=>$x, y=>$y);
 
     my @stack = ([$x,$y]);
-    my $scanned = {};
+    my $scanned = $box->{scanned} = {};
     while(@stack) {
         my $p = shift @stack;
         my ($x,$y) = @$p;
