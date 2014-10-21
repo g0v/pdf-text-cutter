@@ -36,10 +36,10 @@ my $ratio_vertical   = ($original_image->getwidth  / $cutter->image->getwidth  )
 for my $box (@$boxes) {
     my $b = $box->{box};
     my $b2 = {
-        top    => ($b->{top}   - 1) * $ratio_horizontal,
-        bottom => (b->{bottom} + 1) * $ratio_horizontal,
-        left   => ($b->{left}  - 1) * $ratio_vertical,
-        right  => ($b->{right} + 1) * $ratio_vertical,
+        top    => ($b->{top}    - 1) * $ratio_horizontal,
+        bottom => ($b->{bottom} + 1) * $ratio_horizontal,
+        left   => ($b->{left}   - 1) * $ratio_vertical,
+        right  => ($b->{right}  + 1) * $ratio_vertical,
     };
     $box->{box} = $b2;
     $box->{_box_shadow} = $b;
