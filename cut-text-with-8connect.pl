@@ -20,18 +20,37 @@ my ($input_file, $output_dir) = @ARGV;
 
 my $shadowed = "/tmp/$$.shadowed.png";
 
-system "convert", "-statistic", "minimum", "3x3", $input_file, $shadowed;
+system "convert", $input_file, qw(-resize 2000x2000 -contrast -enhance -sharpen 5x5 -statistic minimum 1x2), $shadowed;
 
 my $cutter = ImageCutter->new( image => Imager->new(file => $shadowed) );
 my $boxes = $cutter->cut_8connect_boxes;
 
 make_path($output_dir) unless -d $output_dir;
 
-my $original_image = Imager->new(file => $input_file);
-for (@$boxes) {
-    my $b = $_->{box};
-    my $img = $original_image->crop(%$b);
-    $img->write(file => "${output_dir}/bbox-" . join(",", @{$b}{"top","right", "bottom","left"}) . ".png");
+$cutter->image->write( file => "${output_dir}/shadow.png" );
+
+my $original_image   = Imager->new(file => $input_file);
+my $ratio_horizontal = ($original_image->getheight / $cutter->image->getheight );
+my $ratio_vertical   = ($original_image->getwidth  / $cutter->image->getwidth  );
+
+for my $box (@$boxes) {
+    my $b = $box->{box};
+    my $b2 = {
+        top    => ($b->{top}   - 1) * $ratio_horizontal,
+        bottom => (b->{bottom} + 1) * $ratio_horizontal,
+        left   => ($b->{left}  - 1) * $ratio_vertical,
+        right  => ($b->{right} + 1) * $ratio_vertical,
+    };
+    $box->{box} = $b2;
+    $box->{_box_shadow} = $b;
+
+    my $img;
+    if ($img = $original_image->crop(%$b2)) {
+        $img->write(file => "${output_dir}/original-bbox-" . join(",", @{$b}{"top","right", "bottom","left"}) . ".png");
+    }
+    if ($img = $cutter->image->crop(%$b)) {
+        $img->write(file => "${output_dir}/shadow-bbox-" . join(",", @{$b}{"top","right", "bottom","left"}) . ".png");
+    }
 }
 
 open my $fh, ">", "${output_dir}/receipt.json";
