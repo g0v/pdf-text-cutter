@@ -20,7 +20,7 @@ my ($input_file, $output_dir) = @ARGV;
 
 my $shadowed = "/tmp/$$.shadowed.png";
 
-system "convert", $input_file, qw(-contrast -enhance -sharpen 2x2 -resize 2000x2000), $shadowed;
+system "convert", $input_file, qw( -threshold 60% -monochrome ), $shadowed;
 
 my $cutter = ImageCutter->new( image => Imager->new(file => $shadowed) );
 my $boxes = $cutter->cut_8connect_boxes;
