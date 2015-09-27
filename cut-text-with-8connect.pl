@@ -3,6 +3,7 @@ use v5.14;
 use strict;
 use warnings;
 use JSON;
+use List::Util qw(min);
 use Imager;
 use File::Path qw(make_path);
 
@@ -33,6 +34,9 @@ my $original_image   = Imager->new(file => $input_file);
 my $ratio_horizontal = ($original_image->getheight / $cutter->image->getheight );
 my $ratio_vertical   = ($original_image->getwidth  / $cutter->image->getwidth  );
 
+my $min_box_dimension = min($original_image->getheight, $original_image->getwidth) * 0.01;
+my $max_box_dimension = min($original_image->getheight, $original_image->getwidth) * 0.5;
+
 for my $box (@$boxes) {
     my $b = $box->{box};
     my $b2 = {
@@ -43,6 +47,10 @@ for my $box (@$boxes) {
     };
     $box->{box} = $b2;
     $box->{_box_shadow} = $b;
+
+    my $b2_width = $b2->{right} - $b2->{left};
+    my $b2_height = $b2->{bottom} - $b2->{top};
+    next if $b2_width < $min_box_dimension || $b2_width > $max_box_dimension || $b2_height < $min_box_dimension || $b2_height > $max_box_dimension;
 
     my $img;
     if ($img = $original_image->crop(%$b2)) {
