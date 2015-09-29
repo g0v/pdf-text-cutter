@@ -37,6 +37,7 @@ my $ratio_vertical   = ($original_image->getwidth  / $cutter->image->getwidth  )
 my $min_box_dimension = min($original_image->getheight, $original_image->getwidth) * 0.01;
 my $max_box_dimension = min($original_image->getheight, $original_image->getwidth) * 0.5;
 
+my @boxes_keep;
 for my $box (@$boxes) {
     my $b = $box->{box};
     my $b2 = {
@@ -52,6 +53,7 @@ for my $box (@$boxes) {
     my $b2_height = $b2->{bottom} - $b2->{top};
     next if $b2_width < $min_box_dimension || $b2_width > $max_box_dimension || $b2_height < $min_box_dimension || $b2_height > $max_box_dimension;
 
+    push @boxes_keep, $box;
     my $img;
     if ($img = $original_image->crop(%$b2)) {
         $img->write(file => "${output_dir}/original-bbox-" . join(",", @{$b}{"top","right", "bottom","left"}) . ".png");
@@ -62,6 +64,6 @@ for my $box (@$boxes) {
 }
 
 open my $fh, ">", "${output_dir}/receipt.json";
-say $fh JSON::to_json( $boxes, { pretty => 1 });
+say $fh JSON::to_json( \@boxes_keep, { pretty => 1, canonical => 1 });
 
 unlink $shadowed;
